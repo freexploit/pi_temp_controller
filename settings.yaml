@@ -1,0 +1,9 @@
+apiVersion: tejita.tech/v1
+kind: FanSettings
+metadata:
+  name: example
+spec:
+  min_threshold: 36
+  max_threshold: 40
+  frequency: 10 
+  pi: 26 

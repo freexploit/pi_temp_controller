@@ -1,0 +1,26 @@
+FROM freexploit/rust-musl-builder:latest AS chef
+
+USER root
+RUN cargo install cargo-chef
+WORKDIR /app
+
+FROM chef AS planner
+COPY . .
+RUN cargo chef prepare --recipe-path recipe.json
+
+
+FROM chef AS build
+
+COPY --from=planner /app/recipe.json recipe.json
+# Notice that we are specifying the --target flag!
+RUN cargo chef cook  --release --target aarch64-unknown-linux-musl --recipe-path recipe.json
+COPY . .
+RUN apt update && apt-get install libssl-dev liblzo2-dev openssl -y
+RUN cargo build  --release --target aarch64-unknown-linux-musl --bin pi_temp_controller
+RUN strip --strip-all /app/target/aarch64-unknown-linux-musl/release/pi_temp_controller
+
+# Build our application.
+
+FROM alpine:3
+COPY --from=build /app/target/aarch64-unknown-linux-musl/release/pi_temp_controller /usr/local/bin/
+CMD ["/usr/local/bin/pi_temp_controller"]
